@@ -100,7 +100,7 @@ final public class XcodeFiles {
             .documentationCache: XcodeFileEntry(label: "Documentation Cache", tooltipText: "Documentation cache for each version of Xcode.", tooltip: true, selected: false),
             .logs: XcodeFileEntry(label: "Old Logs", tooltipText: "Old device logs and crash databases. Usually, only the most recent ones are needed as they are duplicates of earlier logs.", tooltip: true, selected: false),
             .oldDocumentation: OldDocumentationFileEntry(selected: false),
-            .simulators: XcodeFileEntry(label: "Simulators", tooltipText: "Unavailable simulator devices whose runtime is no longer installed.", tooltip: true, selected: false)
+            .simulators: XcodeFileEntry(label: "Simulators", tooltipText: "Unavailable simulator devices and orphaned XCTest device clones left behind when UI tests are killed mid-run.", tooltip: true, selected: false)
         ]
     }
     
@@ -800,14 +800,46 @@ final public class XcodeFiles {
             }
         }
 
-        guard !unavailableEntries.isEmpty else {
-            return []
+        var result = [XcodeFileEntry]()
+
+        if !unavailableEntries.isEmpty {
+            unavailableEntries.sort { $0.label < $1.label }
+            let unavailableGroup = XcodeFileEntry(label: "Unavailable", icon: .system(name: NSImage.folderName), selected: false)
+            unavailableGroup.addChildren(items: unavailableEntries)
+            result.append(unavailableGroup)
         }
 
-        unavailableEntries.sort { $0.label < $1.label }
+        result.append(contentsOf: scanXCTestDeviceLocations())
+        return result
+    }
 
-        let groupEntry = XcodeFileEntry(label: "Unavailable", icon: .system(name: NSImage.folderName), selected: false)
-        groupEntry.addChildren(items: unavailableEntries)
+    private func scanXCTestDeviceLocations() -> [XcodeFileEntry] {
+        let xcTestDevicesDir = self.userDeveloperFolderUrl.appendingPathComponent("XCTestDevices")
+        guard let deviceDirs = try? FileManager.default.contentsOfDirectory(
+            at: xcTestDevicesDir, includingPropertiesForKeys: nil, options: .skipsHiddenFiles
+        ) else { return [] }
+
+        var cloneEntries = [SimulatorFileEntry]()
+        for deviceDir in deviceDirs {
+            let plistUrl = deviceDir.appendingPathComponent("device.plist")
+            guard let plist = NSDictionary(contentsOf: plistUrl),
+                  let name = plist["name"] as? String,
+                  let udid = plist["UDID"] as? String,
+                  let runtime = plist["runtime"] as? String,
+                  plist["isDeleted"] as? Bool != true else { continue }
+
+            let displayRuntime = XcodeFiles.simulatorRuntimeDisplayName(for: runtime)
+            let entry = SimulatorFileEntry(name: name, udid: udid, runtime: displayRuntime, selected: false)
+            entry.addPath(path: deviceDir)
+            cloneEntries.append(entry)
+            log.info("XcodeFiles: XCTest clone: \(name) (\(displayRuntime))")
+        }
+
+        guard !cloneEntries.isEmpty else { return [] }
+
+        cloneEntries.sort { $0.label < $1.label }
+        let groupEntry = XcodeFileEntry(label: "Clones", icon: .system(name: NSImage.folderName), selected: false)
+        groupEntry.addChildren(items: cloneEntries)
         return [groupEntry]
     }
 
