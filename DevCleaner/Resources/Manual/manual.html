@@ -36,6 +36,7 @@
         <h4>Derived Data</h4>
         <p>When you develop your app, Xcode caches your symbols, dependencies, logs, text - all to develop fast and to keep code completion working. Unfortunately this data tend to take a lot of space, especially for big projects. Also, they're not deleted automatically. This may be especially problematic if you open a lot of various projects.</p>
         <p>Removing derived data is not harmful as Xcode can recreate them when you open project again. Although it's not recommended for projects that you work on often. For this reason nothing is selected by default.</p>
+        <p>Some folders inside <code>DerivedData</code> may not be recognized as a specific project — for example orphaned caches left behind after a project was deleted or renamed, or entries that were corrupted and are missing their metadata. These folders are grouped under an <b>Other</b> node at the bottom of the Derived Data list so you can inspect and clean them too.</p>
         
         <h4>Documentation Cache</h4>
         <p>Modern Xcodes are caching documentation that is accessed via the web. Unfortunately older caches are not cleaned up by Xcode and significant
