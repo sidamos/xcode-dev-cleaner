@@ -51,6 +51,12 @@
         <h4>Old Documentation Downloads</h4>
         <p>Recent versions of Xcode are using online help. But if you used Xcode in the past, you may still have documentation downloaded locally to your computer. It could take a lot of space and currently there is no use for it.</p>
 
+        <h4>Simulators</h4>
+        <p>Over time Xcode accumulates simulator-related data that is no longer needed. DevCleaner groups this into two sub-nodes:</p>
+        <p><b>Unavailable</b> — Simulator devices whose runtime has been deleted. When you remove an iOS, watchOS, tvOS, or visionOS runtime from Xcode, the simulator devices that depended on it are left behind on disk. These devices can never be booted again and are safe to delete.</p>
+        <p><b>Clones</b> — Temporary simulator devices created by Xcode for UI test runs (stored in <code>~/Library/Developer/XCTestDevices/</code>). If a test run is interrupted or Xcode crashes, these clones are not cleaned up automatically and can accumulate over time. They are safe to delete.</p>
+        <p>Nothing is selected by default — review the entries before cleaning.</p>
+
         <h3>Main Window</h3>
         <p>This is the main interface of the application, you select here what you want to clean and performing cleaning itself. You can also <b>share or tip me</b> if you want &#128526;</p>
 
@@ -134,8 +140,8 @@ OPTIONS:
 
     info
         Show all items available to clean.
-    clean <all,device-support,archives,derived-data,docs-cache,old-logs,old-documentation>
-        Perform cleaning of given items. Available options: all,device-support,archives,derived-data,docs-cache,previews,old-logs,old-documentation. If you want to clean all, pass "all" or nothing
+    clean <all,device-support,archives,derived-data,docs-cache,old-logs,old-documentation,simulators>
+        Perform cleaning of given items. Available options: all,device-support,archives,derived-data,docs-cache,previews,old-logs,old-documentation,simulators. If you want to clean all, pass "all" or nothing
     --help
         Prints this message
         </pre>
