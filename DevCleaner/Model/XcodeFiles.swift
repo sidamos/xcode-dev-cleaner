@@ -264,13 +264,14 @@ final public class XcodeFiles {
                                       selected: false)
     }
     
+    private func derivedDataFolderName(from url: URL) -> String {
+        let splitted = url.lastPathComponent.split(separator: "-", omittingEmptySubsequences: true).dropLast()
+        return splitted.joined(separator: "-").replacingOccurrences(of: "_", with: " ")
+    }
+
     private func derivedDataEntry(from location: URL) -> DerivedDataFileEntry? {
-        // drop last part that's the kind of id of a project
-        let splitted = location.lastPathComponent.split(separator: "-", omittingEmptySubsequences: true).dropLast()
-        
-        // create project name
-        let name = splitted.joined(separator: "-").replacingOccurrences(of: "_", with: " ") // replace all dashes with spaces
-        
+        let name = self.derivedDataFolderName(from: location)
+
         // find project folder path
         let infoPath = location.appendingPathComponent("info.plist")
         
@@ -615,6 +616,7 @@ final public class XcodeFiles {
         
         // scan for derived data projects
         var results: [XcodeFileEntry] = []
+        var otherFolders: [URL] = []
         for derivedDataLocation in derivedDataLocations {
             if let projectsFolders = try? FileManager.default.contentsOfDirectory(at: derivedDataLocation, includingPropertiesForKeys: nil, options: Self.scanFileEnumerationOptions) {
                 for projectFolder in projectsFolders {
@@ -622,25 +624,39 @@ final public class XcodeFiles {
                     if projectFolder.lastPathComponent == "ModuleCache" {
                         continue
                     }
-                    
+
                     if let projectEntry = self.derivedDataEntry(from: projectFolder) {
                         projectEntry.addPath(path: projectFolder)
-                        
                         results.append(projectEntry)
+                    } else {
+                        otherFolders.append(projectFolder)
                     }
                 }
             }
         }
-        
+
         // sort
         for entry in results {
             entry.recalculateSize()
         }
-        
+
         results = results.sorted { lhs, rhs in
             return lhs.size > rhs.size
         }
-        
+
+        // group unrecognized folders under an "Other" node, appended after the sorted results
+        if !otherFolders.isEmpty {
+            let otherEntry = XcodeFileEntry(label: "Other", extraInfo: "", icon: .system(name: NSImage.folderName), selected: false)
+            for folder in otherFolders {
+                let name = self.derivedDataFolderName(from: folder)
+                let childEntry = DerivedDataFileEntry(projectName: name, pathUrl: folder, selected: false)
+                childEntry.addPath(path: folder)
+                otherEntry.addChild(item: childEntry)
+            }
+            otherEntry.recalculateSize()
+            results.append(otherEntry)
+        }
+
         return results
     }
     
