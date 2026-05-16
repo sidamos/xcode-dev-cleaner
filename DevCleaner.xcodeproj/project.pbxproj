@@ -61,6 +61,7 @@
 		71FD37D9206AD72C0042812D /* DeviceSupportFileEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71FD37D8206AD72C0042812D /* DeviceSupportFileEntry.swift */; };
 		71FD37DD206AD76D0042812D /* DerivedDataFileEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71FD37DC206AD76D0042812D /* DerivedDataFileEntry.swift */; };
 		A84F5D2C631C44F6A400B49D /* device_identifiers.csv in Resources */ = {isa = PBXBuildFile; fileRef = BAF8F9B5BB114D2196AD27A1 /* device_identifiers.csv */; };
+		E97697AC2FB775040086DF05 /* SimulatorFileEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = E97697AB2FB775040086DF05 /* SimulatorFileEntry.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -124,6 +125,7 @@
 		71FD37D8206AD72C0042812D /* DeviceSupportFileEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceSupportFileEntry.swift; sourceTree = "<group>"; };
 		71FD37DC206AD76D0042812D /* DerivedDataFileEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DerivedDataFileEntry.swift; sourceTree = "<group>"; };
 		BAF8F9B5BB114D2196AD27A1 /* device_identifiers.csv */ = {isa = PBXFileReference; lastKnownFileType = text; path = device_identifiers.csv; sourceTree = "<group>"; };
+		E97697AB2FB775040086DF05 /* SimulatorFileEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulatorFileEntry.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -345,6 +347,7 @@
 				717A3EC828FC3DDC002A0C8F /* DocumentationCacheFileEntry.swift */,
 				714AB65E22DA87FA00A7FBB7 /* DeviceLogsFileEntry.swift */,
 				717A9F1A22DBAF9300682A0A /* OldDocumentationFileEntry.swift */,
+				E97697AB2FB775040086DF05 /* SimulatorFileEntry.swift */,
 			);
 			path = Entries;
 			sourceTree = "<group>";
@@ -378,7 +381,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 0920;
-				LastUpgradeCheck = 2610;
+				LastUpgradeCheck = 2650;
 				ORGANIZATIONNAME = "One Minute Games";
 				TargetAttributes = {
 					7110B48D2030F17B00EDBFA3 = {
@@ -490,6 +493,7 @@
 				71FD37D7206AD6BE0042812D /* ArchiveFileEntry.swift in Sources */,
 				71C8ACE020A62B8000E7A13B /* ScanReminders.swift in Sources */,
 				7140B617231A81DC005768A7 /* ReviewRequests.swift in Sources */,
+				E97697AC2FB775040086DF05 /* SimulatorFileEntry.swift in Sources */,
 				7100BEE222F6E771002E82B2 /* Signposts.swift in Sources */,
 				716667D0221A26BA004D4FC4 /* FileManager+HomeFolder.swift in Sources */,
 				718D4ABE23140ABA001E9382 /* Files.swift in Sources */,
@@ -559,6 +563,7 @@
 				DEVELOPMENT_TEAM = 3DS5SGYDG6;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -577,6 +582,7 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -622,6 +628,7 @@
 				DEVELOPMENT_TEAM = 3DS5SGYDG6;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -633,6 +640,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 			};

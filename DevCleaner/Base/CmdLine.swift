@@ -105,6 +105,8 @@ public final class CmdLine {
                         return .logs
                     case "old-documentation":
                         return .oldDocumentation
+                    case "simulators":
+                        return .simulators
                     default:
                         throw Error.wrongOption(option: trimmedOption)
                 }

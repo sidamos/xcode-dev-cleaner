@@ -39,7 +39,7 @@ public protocol XcodeFilesDeleteDelegate: AnyObject {
 final public class XcodeFiles {
     // MARK: Types
     public enum Location: Int, CaseIterable {
-        case deviceSupport, archives, derivedData, documentationCache, logs, oldDocumentation
+        case deviceSupport, archives, derivedData, documentationCache, logs, oldDocumentation, simulators
     }
     
     public enum State {
@@ -99,7 +99,8 @@ final public class XcodeFiles {
             .derivedData: XcodeFileEntry(label: "Derived Data", tooltipText: "Cached project data and symbol index.", tooltip: true, selected: false),
             .documentationCache: XcodeFileEntry(label: "Documentation Cache", tooltipText: "Documentation cache for each version of Xcode.", tooltip: true, selected: false),
             .logs: XcodeFileEntry(label: "Old Logs", tooltipText: "Old device logs and crash databases. Usually, only the most recent ones are needed as they are duplicates of earlier logs.", tooltip: true, selected: false),
-            .oldDocumentation: OldDocumentationFileEntry(selected: false)
+            .oldDocumentation: OldDocumentationFileEntry(selected: false),
+            .simulators: XcodeFileEntry(label: "Simulators", tooltipText: "Unavailable simulator devices whose runtime is no longer installed.", tooltip: true, selected: false)
         ]
     }
     
@@ -459,6 +460,9 @@ final public class XcodeFiles {
             // different for those, as we don't have an option to select separate entries here
             case .oldDocumentation:
                 entry.addPaths(paths: self.scanOldDocumentationLocations())
+
+            case .simulators:
+                entry.addChildren(items: self.scanSimulatorLocations())
         }
         
         // check for those files sizes
@@ -755,6 +759,100 @@ final public class XcodeFiles {
         return entries
     }
     
+    private func scanSimulatorLocations() -> [XcodeFileEntry] {
+        let devicesDir = self.userDeveloperFolderUrl.appendingPathComponent("CoreSimulator/Devices")
+
+        // Collect runtime identifiers of all currently installed runtimes from the filesystem.
+        // This avoids spawning xcrun simctl, which is blocked in the macOS sandbox.
+        let availableRuntimeIds = XcodeFiles.installedSimulatorRuntimeIds()
+        log.info("XcodeFiles: Found \(availableRuntimeIds.count) installed simulator runtime(s)")
+
+        guard !availableRuntimeIds.isEmpty else {
+            // Could not read runtime volumes — sandbox likely blocked access. Nothing to show.
+            log.warning("XcodeFiles: Cannot read CoreSimulator Volumes — skipping simulator scan")
+            return []
+        }
+
+        guard let deviceDirs = try? FileManager.default.contentsOfDirectory(
+            at: devicesDir, includingPropertiesForKeys: nil, options: .skipsHiddenFiles
+        ) else {
+            log.warning("XcodeFiles: Cannot read CoreSimulator Devices directory")
+            return []
+        }
+
+        var unavailableEntries = [SimulatorFileEntry]()
+        for deviceDir in deviceDirs {
+            let plistUrl = deviceDir.appendingPathComponent("device.plist")
+            guard let plist = NSDictionary(contentsOf: plistUrl),
+                  let name = plist["name"] as? String,
+                  let udid = plist["UDID"] as? String,
+                  let runtime = plist["runtime"] as? String,
+                  plist["isDeleted"] as? Bool != true else {
+                continue
+            }
+
+            if !availableRuntimeIds.contains(runtime) {
+                let displayRuntime = XcodeFiles.simulatorRuntimeDisplayName(for: runtime)
+                let entry = SimulatorFileEntry(name: name, udid: udid, runtime: displayRuntime, selected: false)
+                entry.addPath(path: deviceDir)
+                unavailableEntries.append(entry)
+                log.info("XcodeFiles: Unavailable simulator: \(name) (\(displayRuntime))")
+            }
+        }
+
+        guard !unavailableEntries.isEmpty else {
+            return []
+        }
+
+        unavailableEntries.sort { $0.label < $1.label }
+
+        let groupEntry = XcodeFileEntry(label: "Unavailable", icon: .system(name: NSImage.folderName), selected: false)
+        groupEntry.addChildren(items: unavailableEntries)
+        return [groupEntry]
+    }
+
+    // Reads installed simulator runtimes from the CoreSimulator Volumes directory without
+    // spawning any subprocess — safe to call from a sandboxed app.
+    private static func installedSimulatorRuntimeIds() -> Set<String> {
+        let volumesDir = URL(fileURLWithPath: "/Library/Developer/CoreSimulator/Volumes")
+        guard let volumes = try? FileManager.default.contentsOfDirectory(
+            at: volumesDir, includingPropertiesForKeys: nil, options: .skipsHiddenFiles
+        ) else {
+            log.warning("XcodeFiles: Cannot list CoreSimulator Volumes (path: \(volumesDir.path))")
+            return []
+        }
+
+        var runtimeIds = Set<String>()
+        for volume in volumes {
+            let runtimesPath = volume.appendingPathComponent("Library/Developer/CoreSimulator/Profiles/Runtimes")
+            guard let bundles = try? FileManager.default.contentsOfDirectory(
+                at: runtimesPath, includingPropertiesForKeys: nil, options: .skipsHiddenFiles
+            ) else { continue }
+
+            for bundle in bundles where bundle.pathExtension == "simruntime" {
+                let infoUrl = bundle.appendingPathComponent("Contents/Info.plist")
+                if let info = NSDictionary(contentsOf: infoUrl),
+                   let bundleId = info["CFBundleIdentifier"] as? String {
+                    runtimeIds.insert(bundleId)
+                }
+            }
+        }
+
+        return runtimeIds
+    }
+
+    // Converts "com.apple.CoreSimulator.SimRuntime.iOS-16-2" → "iOS 16.2"
+    private static func simulatorRuntimeDisplayName(for runtimeId: String) -> String {
+        return runtimeId
+            .replacingOccurrences(of: "com.apple.CoreSimulator.SimRuntime.", with: "")
+            .replacingOccurrences(of: "-", with: ".")
+            .replacingOccurrences(of: "iOS.", with: "iOS ")
+            .replacingOccurrences(of: "watchOS.", with: "watchOS ")
+            .replacingOccurrences(of: "tvOS.", with: "tvOS ")
+            .replacingOccurrences(of: "xrOS.", with: "visionOS ")
+            .replacingOccurrences(of: "visionOS.", with: "visionOS ")
+    }
+
     private func scanOldDocumentationLocations() -> [URL] {
         // get location
         let docsLocation = self.userDeveloperFolderUrl.appendingPathComponent("Shared/Documentation")
